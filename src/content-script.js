@@ -1,5 +1,5 @@
-import { setupSelection, teardownSelection, isSelectionActive } from './src/utils/highlight.js';
-import { generateXPath } from './src/utils/xpath.js';
+import { setupSelection, teardownSelection, isSelectionActive } from './utils/highlight.js';
+import { generateXPath } from './utils/xpath.js';
 
 // This file will be bundled in practice; for raw use, you can inline utils here
 // or adjust build paths. For simplicity, we assume a bundler copies utils.
