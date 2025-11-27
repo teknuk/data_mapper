@@ -1,6 +1,10 @@
 // Example skeleton using Puppeteer-style API (you can adapt it)
 import path from 'path';
 import puppeteer from 'puppeteer';
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 (async () => {
   const extensionPath = path.resolve(__dirname, '../..');
