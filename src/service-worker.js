@@ -30,5 +30,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message?.type === "DATAMAPPER_DOWNLOAD") {
+    chrome.downloads.download({ url: message.url, filename: message.filename, saveAs: true });
+    // Keep port open
+    return false;
+  }
+
   return false;
 });

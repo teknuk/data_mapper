@@ -134,11 +134,12 @@
     }
     const filename = buildFilename(templateName, ext);
     const urlObj = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = urlObj;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(urlObj);
+    chrome.runtime.sendMessage({ type: "DATAMAPPER_DOWNLOAD", url: urlObj, filename });
+    // const a = document.createElement('a');
+    // a.href = urlObj;
+    // a.download = filename;
+    // a.click();
+    // URL.revokeObjectURL(urlObj);
   }
 
   async function handleExportTemplates() {
@@ -146,11 +147,12 @@
     const blob = new Blob([json], { type: 'application/json' });
     const filename = buildFilename('templates', 'json');
     const urlObj = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = urlObj;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(urlObj);
+    chrome.runtime.sendMessage({ type: "DATAMAPPER_DOWNLOAD", url: urlObj, filename });
+    // const a = document.createElement('a');
+    // a.href = urlObj;
+    // a.download = filename;
+    // a.click();
+    // URL.revokeObjectURL(urlObj);
   }
 
   async function handleImportTemplates(event, mode = 'merge') {

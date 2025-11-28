@@ -3,7 +3,7 @@
   "name": "DataMapper",
   "version": "1.0.8",
   "description": "Visually map elements on a page to structured data fields and export as JSON, XML, or CSV.",
-  "permissions": ["storage", "scripting", "activeTab"],
+  "permissions": ["storage", "scripting", "activeTab", "downloads"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "service-worker.js",
