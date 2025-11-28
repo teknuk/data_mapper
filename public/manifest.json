@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DataMapper",
-  "version": "1.0.1",
+  "version": "1.0.6",
   "description": "Visually map elements on a page to structured data fields and export as JSON, XML, or CSV.",
   "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": ["<all_urls>"],
@@ -10,7 +10,6 @@
     "type": "module"
   },
   "action": {
-    "default_popup": "index.html",
     "default_title": "DataMapper"
   },
   "content_scripts": [
@@ -18,6 +17,13 @@
       "matches": ["<all_urls>"],
       "js": ["content-script.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["index.html", "panel.js", "panel.css"],
+      "matches": ["<all_urls>"],
+      "use_dynamic_url": true
     }
   ]
 }

@@ -7,6 +7,10 @@ import { generateXPath } from './utils/xpath.js';
 let currentTemplateName = 'default';
 let currentSelectionType = 'css'; // default type for new mappings
 
+let panelVisible = false;
+let panelContainer = null;
+let panelIframe = null;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return;
 
@@ -20,6 +24,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       currentSelectionType = message.selectorType || 'css';
       toggleSelectionMode(message.active);
       break;
+
+    case 'DATAMAPPER_TOGGLE_PANEL':
+      togglePanel();
+      return; // async
 
     case 'DATAMAPPER_EXTRACT':
       currentTemplateName = message.templateName || currentTemplateName || 'default';
@@ -148,4 +156,43 @@ function handleExtraction(templateName, sendResponse) {
     chrome.runtime.sendMessage(payload);
     if (sendResponse) sendResponse(payload);
   });
+}
+
+function togglePanel() {
+  if (panelVisible) {
+    if (panelContainer && panelContainer.parentNode) {
+      panelContainer.parentNode.removeChild(panelContainer);
+    }
+    panelContainer = null;
+    panelIframe = null;
+    panelVisible = false;
+    return;
+  }
+
+  panelContainer = document.createElement('div');
+  Object.assign(panelContainer.style, {
+    position: 'fixed',
+    top: '0',
+    right: '0',
+    width: '420px',
+    height: '100vh',
+    zIndex: '2147483640',   // lower than your highlight tooltip z-index if needed
+    boxShadow: '0 0 20px rgba(0,0,0,0.35)'
+  });
+
+  panelIframe = document.createElement('iframe');
+  panelIframe.src = chrome.runtime.getURL('index.html'); // we’ll create this
+  panelIframe.sandbox = "allow-scripts allow-same-origin";
+  Object.assign(panelIframe.style, {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    background: 'transparent'
+  });
+
+  const shadow = panelContainer.attachShadow({ mode: "open" });
+  shadow.appendChild(panelIframe);
+  // panelContainer.appendChild(panelIframe);
+  document.documentElement.appendChild(panelContainer);
+  panelVisible = true;
 }

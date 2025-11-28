@@ -2,6 +2,12 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('DataMapper installed');
 });
 
+// Click on extension icon → toggle panel on active tab
+chrome.action.onClicked.addListener((tab) => {
+  if (!tab.id) return;
+  chrome.tabs.sendMessage(tab.id, { type: 'DATAMAPPER_TOGGLE_PANEL' });
+});
+
 // Forward popup → content-script messages to active tab when needed
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.target === 'content-script') {
