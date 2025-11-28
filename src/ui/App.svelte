@@ -49,6 +49,18 @@
     toastTimeout = setTimeout(() => (toastMessage = ''), 2500);
   }
 
+  async function removeField(fieldName) {
+    const updated = { ...templates[currentTemplateName] };
+    delete updated[fieldName];
+    templates = {
+      ...templates,
+      [currentTemplateName]: updated
+    };
+    await saveTemplate(currentTemplateName, templates[currentTemplateName]);
+    currentFields = templates[currentTemplateName];
+    showToast(`Field "${fieldName}" removed`);
+  }
+
   // function templateNames() {
   //   return Object.keys(templates);
   // }
@@ -309,6 +321,9 @@
                 <div class="text-[11px] text-slate-400 break-all">
                   {mapping.selector}
                 </div>
+                <button class="mt-1 text-[11px] text-red-400 hover:text-red-300 underline" on:click={() => removeField(name)}>
+                  REMOVE
+                </button>
               </div>
             {/each}
           </div>
