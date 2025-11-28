@@ -1,4 +1,8 @@
+import { getCssSelector } from "./css_selector";
+import { generateXPath } from "./xpath";
+
 let selectionActive = false;
+let tooltipOpen = false;
 let hoverOverlay;
 let clickOverlay;
 let tooltip;
@@ -7,6 +11,27 @@ let cleanupFns = [];
 
 export function isSelectionActive() {
   return selectionActive;
+}
+
+function extractElementInfo(el) {
+  return {
+    css: getCssSelector(el),
+    xpath: generateXPath(el),
+    text: el.innerText.trim()
+  };
+}
+
+function isValidSelectable(el, info) {
+  const rect = el.getBoundingClientRect();
+
+  if (rect.width < 5 || rect.height < 5) return false;
+  if (el.children.length === 0 && (el.innerText.trim() === "")) return false;
+
+  // Reject noisy containers
+  const badTags = ["HTML", "BODY", "HEAD", "SCRIPT", "STYLE"];
+  if (badTags.includes(el.tagName)) return false;
+
+  return true;
 }
 
 export function setupSelection({ onElementChosen }) {
@@ -31,12 +56,15 @@ export function setupSelection({ onElementChosen }) {
   };
 
   const click = (e) => {
-    if (!selectionActive) return;
+    if (!selectionActive || tooltipOpen) return;
     e.preventDefault();
     e.stopPropagation();
     const target = e.target;
     if (!target || !(target instanceof Element)) return;
+    const info = extractElementInfo(target);
+    if (!isValidSelectable(target, info)) return;
     currentElement = target;
+    tooltipOpen = true;
     highlightElement(target, clickOverlay);
     showTooltipForElement(target, onElementChosen);
   };
@@ -104,6 +132,12 @@ function createTooltip() {
   tooltip.style.maxWidth = '260px';
 
   tooltip.innerHTML = `
+    <style>
+      #dm-save:focus, #dm-cancel:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+      }
+    </style>
     <div style="margin-bottom:4px;font-weight:600;">Map field</div>
     <label style="display:block;margin-bottom:4px;">
       <span style="display:block;margin-bottom:2px;">Field name</span>
@@ -155,8 +189,14 @@ function showTooltipForElement(el, onElementChosen) {
   nameInput.value = '';
   nameInput.focus();
 
+  tooltip.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") handleSave();
+    if (e.key === "Escape") handleCancel();
+  });
+
   const handleCancel = () => {
     tooltip.style.display = 'none';
+    tooltipOpen = false;
     cleanup();
   };
   const handleSave = () => {
@@ -164,6 +204,7 @@ function showTooltipForElement(el, onElementChosen) {
     const selectorType = typeSelect.value;
     if (!fieldName) return;
     tooltip.style.display = 'none';
+    tooltipOpen = false;
     cleanup();
     onElementChosen({ element: el, fieldName, selectorType });
   };

@@ -7,6 +7,7 @@
   let currentTemplateName = 'default';
   let newTemplateName = '';
   let selectionActive = false;
+  let tooltipOpen = false;
   let selectorType = 'css';
   let extractionResult = null; // { templateName, data, url, timestamp }
   let toastMessage = '';
@@ -73,6 +74,14 @@
     currentTemplateName = name;
     newTemplateName = '';
     notifyContentTemplate();
+  }
+
+  function selectionBackgroundClass() {
+    if (selectionActive) {
+      if (tooltipOpen) return 'bg-orange-500';
+      return 'bg-rose-500';
+    }
+    return 'bg-sky-500';
   }
 
   async function toggleSelection() {
@@ -213,8 +222,7 @@
         <div>
           <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Selection</div>
           <button
-            class="w-full px-2 py-1 rounded-md text-[11px] font-semibold
-              {selectionActive ? 'bg-rose-500 text-slate-900' : 'bg-sky-500 text-slate-900'}"
+            class="w-full px-2 py-1 rounded-md text-[11px] font-semibold text-slate-900 {selectionBackgroundClass()}"
             on:click={toggleSelection}
           >
             {selectionActive ? 'Stop selecting' : 'Start selecting'}
