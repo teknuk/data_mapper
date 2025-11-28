@@ -5,6 +5,7 @@
 
   let templates = {};
   let currentTemplateName = 'default';
+  let currentFields = {};
   let newTemplateName = '';
   let selectionActive = false;
   let tooltipOpen = false;
@@ -15,10 +16,12 @@
 
   onMount(async () => {
     templates = await loadTemplates();
+    console.log("=== onMount => loadTemplates()", templates)
     if (!templates[currentTemplateName]) {
       templates[currentTemplateName] = {};
       await saveTemplate(currentTemplateName, templates[currentTemplateName]);
     }
+    selectTemplate(currentTemplateName);
     // Listen for content updates
     chrome.runtime.onMessage.addListener((message) => {
       if (message?.type === 'DATAMAPPER_EXTRACTION_RESULT') {
@@ -34,6 +37,7 @@
             [fieldName]: mapping
           }
         };
+        // console.log(templates);
         showToast(`Field "${fieldName}" added to template "${templateName}".`);
       }
     });
@@ -45,12 +49,13 @@
     toastTimeout = setTimeout(() => (toastMessage = ''), 2500);
   }
 
-  function templateNames() {
-    return Object.keys(templates);
-  }
+  // function templateNames() {
+  //   return Object.keys(templates);
+  // }
 
   function selectTemplate(name) {
     currentTemplateName = name;
+    currentFields = templates[currentTemplateName];
     notifyContentTemplate();
   }
 
@@ -71,9 +76,10 @@
     }
     templates[name] = {};
     await saveTemplate(name, templates[name]);
-    currentTemplateName = name;
     newTemplateName = '';
-    notifyContentTemplate();
+    selectTemplate(name);
+    // currentTemplateName = name;
+    // notifyContentTemplate();
   }
 
   function selectionBackgroundClass() {
@@ -97,6 +103,7 @@
 
   async function extractData() {
     extractionResult = null;
+    console.log('=== extractData[currentTemplateName]', currentTemplateName)
     chrome.runtime.sendMessage({
       target: 'content-script',
       type: 'DATAMAPPER_EXTRACT',
@@ -104,11 +111,13 @@
     });
   }
 
-  function currentFields() {
-    return templates[currentTemplateName] || {};
-  }
+  // function currentFields() {
+  //   console.log("=== currentFields => templates[currentTemplateName]", currentTemplateName, templates[currentTemplateName]);
+  //   return templates[currentTemplateName] || {};
+  // }
 
   async function download(type) {
+    console.log("=== download(type) => ", type, extractionResult);
     if (!extractionResult) return;
     const { templateName, data, url } = extractionResult;
     let blob;
@@ -155,7 +164,7 @@
   }
 </script>
 
-<div class="w-[420px] h-[600px] bg-slate-900 text-slate-100 flex flex-col">
+<div class="w-[420px] h-[800px] bg-slate-900 text-slate-100 flex flex-col">
   <!-- Header -->
   <header class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
     <div>
@@ -180,7 +189,7 @@
       <div class="p-2 border-b border-slate-800">
         <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Templates</div>
         <div class="space-y-1 max-h-40 overflow-auto pr-1">
-          {#each templateNames() as t}
+          {#each Object.keys(templates) as t}
             <button
               class="w-full text-left px-2 py-1 rounded-md hover:bg-slate-800 {t === currentTemplateName
                 ? 'bg-slate-800 text-emerald-400'
@@ -191,7 +200,7 @@
             </button>
           {/each}
         </div>
-        <div class="mt-2 flex gap-1">
+        <div class="mt-2 flex flex-col gap-1">
           <input
             class="flex-1 bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-[11px]"
             placeholder="New template"
@@ -263,7 +272,7 @@
 
     <!-- Right pane: fields & extraction -->
     <div class="flex-1 flex flex-col text-xs">
-      <div class="p-3 border-b border-slate-800 flex items-center justify-between">
+      <div class="p-3 border-b border-slate-800 items-center justify-between">
         <div>
           <div class="text-[10px] uppercase text-slate-500 tracking-wide mb-1">Mapped fields</div>
           <div class="text-[11px] text-slate-400">
@@ -279,13 +288,13 @@
       </div>
 
       <div class="flex-1 overflow-auto p-3 space-y-2">
-        {#if Object.keys(currentFields()).length === 0}
+        {#if Object.keys(currentFields).length === 0}
           <div class="text-[11px] text-slate-500 italic">
             No fields mapped yet for <span class="text-emerald-400">{currentTemplateName}</span>.
           </div>
         {:else}
           <div class="space-y-2">
-            {#each Object.entries(currentFields()) as [name, mapping]}
+            {#each Object.entries(currentFields) as [name, mapping]}
               <div class="border border-slate-800 rounded-md p-2">
                 <div class="flex justify-between items-center mb-1">
                   <div class="font-semibold text-[11px]">{name}</div>
@@ -306,7 +315,7 @@
 
       <!-- Extraction result -->
       <div class="border-t border-slate-800 p-3 space-y-2">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col items-center justify-between">
           <div>
             <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Extraction</div>
             {#if extractionResult}
