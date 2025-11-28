@@ -28,7 +28,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'DATAMAPPER_TOGGLE_PANEL':
       togglePanel();
-      return; // async
+      break;
 
     case 'DATAMAPPER_EXTRACT':
       currentTemplateName = message.templateName || currentTemplateName || 'default';

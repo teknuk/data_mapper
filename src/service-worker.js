@@ -14,16 +14,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
       if (tab?.id) {
-        chrome.tabs.sendMessage(tab.id, message, sendResponse);
+        // chrome.tabs.sendMessage(tab.id, message, sendResponse);
+        chrome.tabs.sendMessage(tab.id, message);
       }
     });
     // keep channel open for async sendResponse
+    sendResponse({ ok: true }); // ALWAYS respond to avoid port closing error
     return true;
   }
 
   // Extraction result from content script → just relay to all extension views
   if (message?.type === 'DATAMAPPER_EXTRACTION_RESULT') {
     chrome.runtime.sendMessage(message);
+    sendResponse({ ok: true });
+    return true;
   }
 
   return false;
