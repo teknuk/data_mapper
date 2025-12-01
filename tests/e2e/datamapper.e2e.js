@@ -24,7 +24,7 @@ const __dirname = path.dirname(__filename);
   // You may need to locate extension ID first and open chrome-extension://<id>/popup.html in a new tab.
 
   // Example pseudo-steps:
-  // 1) Go to chrome://extensions/, find ID of DataMapper.
+  // 1) Go to chrome://extensions/, find ID of Teknuk DataMapper.
   // 2) Open new tab with popup.html.
   // 3) Simulate "Start selecting", click an element on example.org using DevTools protocol.
   // 4) Trigger "Extract" and verify results.

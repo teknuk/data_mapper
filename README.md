@@ -1,6 +1,6 @@
-# DataMapper – Visual Web Data Mapping & Extraction (Chrome Extension)
+# Teknuk DataMapper – Visual Web Data Mapping & Extraction (Chrome Extension)
 
-**DataMapper** is a Chrome Extension (Manifest V3) that lets you visually select elements on any webpage, map them to named fields, and extract structured data. It’s built as a **modular extension** with a **Svelte + TailwindCSS drawer-style popup**, a **content script** for selection and extraction, and utility modules for exporting data and computing selectors.
+**Teknuk DataMapper** is a Chrome Extension (Manifest V3) that lets you visually select elements on any webpage, map them to named fields, and extract structured data. It’s built as a **modular extension** with a **Svelte + TailwindCSS drawer-style popup**, a **content script** for selection and extraction, and utility modules for exporting data and computing selectors.
 
 You can:
 
@@ -222,14 +222,14 @@ Make sure your root folder contains at least:
 3. Click **Load unpacked**.
 4. Select the **project root** folder.
 
-You should now see **DataMapper** in the toolbar.
+You should now see **Teknuk DataMapper** in the toolbar.
 
 ---
 
 ## 🧭 Usage
 
 1. Open a webpage you want to scrape.
-2. Click the **DataMapper** icon to open the popup (drawer).
+2. Click the **Teknuk DataMapper** icon to open the popup (drawer).
 3. In the drawer:
 
    * Choose or create a **Template**.

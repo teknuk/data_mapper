@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "DataMapper",
-  "version": "1.0.8",
+  "name": "Teknuk DataMapper",
+  "version": "1.1.0",
   "description": "Visually map elements on a page to structured data fields and export as JSON, XML, or CSV.",
   "permissions": ["storage", "scripting", "activeTab", "downloads"],
   "host_permissions": ["<all_urls>"],
@@ -10,7 +10,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "DataMapper"
+    "default_title": "Teknuk DataMapper"
   },
   "content_scripts": [
     {

@@ -6,7 +6,7 @@ export function buildFilename(templateName, ext) {
     pad(now.getMonth() + 1),
     pad(now.getDate())
   ].join('') + '-' + [pad(now.getHours()), pad(now.getMinutes()), pad(now.getSeconds())].join('');
-  const safeTemplate = templateName.replace(/[^a-z0-9-_]+/gi, '_') || 'datamapper';
+  const safeTemplate = templateName.replace(/[^a-z0-9-_]+/gi, '_') || 'tn_datamapper';
   return `${safeTemplate}-${ts}.${ext}`;
 }
 
@@ -58,7 +58,7 @@ export function toXmlBlob(templateName, url, data) {
 
   let xml = '';
   xml += '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += `<datamapper template="${escapeXml(templateName)}" url="${escapeXml(url)}">\n`;
+  xml += `<tn_datamapper template="${escapeXml(templateName)}" url="${escapeXml(url)}">\n`;
   xml += `  <generated>${escapeXml(new Date().toISOString())}</generated>\n`;
   xml += '  <records>\n';
 
@@ -72,7 +72,7 @@ export function toXmlBlob(templateName, url, data) {
   }
 
   xml += '  </records>\n';
-  xml += '</datamapper>\n';
+  xml += '</tn_datamapper>\n';
 
   return new Blob([xml], { type: 'application/xml' });
 }

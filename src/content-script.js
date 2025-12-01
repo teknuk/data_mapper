@@ -17,25 +17,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return;
 
   switch (message.type) {
-    case 'DATAMAPPER_SET_TEMPLATE':
+    case 'TN_DATAMAPPER_SET_TEMPLATE':
       currentTemplateName = message.templateName || 'default';
       break;
 
-    case 'DATAMAPPER_TOGGLE_SELECTION':
+    case 'TN_DATAMAPPER_TOGGLE_SELECTION':
       currentTemplateName = message.templateName || currentTemplateName || 'default';
       currentSelectionType = message.selectorType || 'css';
       toggleSelectionMode(message.active);
       break;
 
-    case 'DATAMAPPER_TOGGLE_PANEL':
+    case 'TN_DATAMAPPER_TOGGLE_PANEL':
       togglePanel();
       break;
 
-    case 'DATAMAPPER_SET_PANEL_SIDE':
+    case 'TN_DATAMAPPER_SET_PANEL_SIDE':
       togglePanelSide(message);
       break;
 
-    case 'DATAMAPPER_EXTRACT':
+    case 'TN_DATAMAPPER_EXTRACT':
       currentTemplateName = message.templateName || currentTemplateName || 'default';
       handleExtraction(currentTemplateName, sendResponse);
       return true; // async
@@ -78,7 +78,7 @@ async function handleElementChosen({ element, fieldName, selectorType }) {
 
     chrome.storage.local.set({ [key]: templates }, () => {
       chrome.runtime.sendMessage({
-        type: 'DATAMAPPER_FIELD_ADDED',
+        type: 'TN_DATAMAPPER_FIELD_ADDED',
         templateName,
         fieldName,
         mapping: templates[fieldName]
@@ -124,7 +124,7 @@ function handleExtraction(templateName, sendResponse) {
     });
 
     const payload = {
-      type: 'DATAMAPPER_EXTRACTION_RESULT',
+      type: 'TN_DATAMAPPER_EXTRACTION_RESULT',
       templateName,
       data: result,
       url: window.location.href,

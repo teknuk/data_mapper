@@ -26,13 +26,13 @@
     selectTemplate(currentTemplateName);
     // Listen for content updates
     chrome.runtime.onMessage.addListener((message) => {
-      if (message?.type === 'DATAMAPPER_EXTRACTION_RESULT') {
+      if (message?.type === 'TN_DATAMAPPER_EXTRACTION_RESULT') {
         extractionResult = message;
         for (const key in currentFields) {
           currentFields[key].value = extractionResult.data[key];
         }
       }
-      if (message?.type === 'DATAMAPPER_FIELD_ADDED') {
+      if (message?.type === 'TN_DATAMAPPER_FIELD_ADDED') {
         const { templateName, fieldName, mapping } = message;
         if (!templates[templateName]) templates[templateName] = {};
         templates = {
@@ -80,7 +80,7 @@
   function notifyContentTemplate() {
     chrome.runtime.sendMessage({
       target: 'content-script',
-      type: 'DATAMAPPER_SET_TEMPLATE',
+      type: 'TN_DATAMAPPER_SET_TEMPLATE',
       templateName: currentTemplateName
     });
   }
@@ -88,7 +88,7 @@
   function togglePanelSide(side) {
     chrome.runtime.sendMessage({
       target: 'content-script',
-      type: 'DATAMAPPER_SET_PANEL_SIDE',
+      type: 'TN_DATAMAPPER_SET_PANEL_SIDE',
       side
     });
   }
@@ -120,7 +120,7 @@
     selectionActive = !selectionActive;
     chrome.runtime.sendMessage({
       target: 'content-script',
-      type: 'DATAMAPPER_TOGGLE_SELECTION',
+      type: 'TN_DATAMAPPER_TOGGLE_SELECTION',
       active: selectionActive,
       templateName: currentTemplateName,
       selectorType
@@ -132,7 +132,7 @@
     console.log('=== extractData[currentTemplateName]', currentTemplateName)
     chrome.runtime.sendMessage({
       target: 'content-script',
-      type: 'DATAMAPPER_EXTRACT',
+      type: 'TN_DATAMAPPER_EXTRACT',
       templateName: currentTemplateName
     });
   }
@@ -160,7 +160,7 @@
     }
     const filename = buildFilename(templateName, ext);
     const urlObj = URL.createObjectURL(blob);
-    chrome.runtime.sendMessage({ type: "DATAMAPPER_DOWNLOAD", url: urlObj, filename });
+    chrome.runtime.sendMessage({ type: "TN_DATAMAPPER_DOWNLOAD", url: urlObj, filename });
     // const a = document.createElement('a');
     // a.href = urlObj;
     // a.download = filename;
@@ -173,7 +173,7 @@
     const blob = new Blob([json], { type: 'application/json' });
     const filename = buildFilename('templates', 'json');
     const urlObj = URL.createObjectURL(blob);
-    chrome.runtime.sendMessage({ type: "DATAMAPPER_DOWNLOAD", url: urlObj, filename });
+    chrome.runtime.sendMessage({ type: "TN_DATAMAPPER_DOWNLOAD", url: urlObj, filename });
     // const a = document.createElement('a');
     // a.href = urlObj;
     // a.download = filename;
@@ -200,7 +200,7 @@
   <!-- Header -->
   <header class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
     <div>
-      <div class="text-xs uppercase tracking-wide text-slate-400">DataMapper</div>
+      <div class="text-xs uppercase tracking-wide text-slate-400">Teknuk DataMapper</div>
       <div class="text-sm font-semibold">
         Template:
         <span class="text-emerald-400">{currentTemplateName}</span>
