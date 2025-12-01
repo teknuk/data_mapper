@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Teknuk DataMapper",
-  "version": "1.1.1",
-  "description": "Visually map elements on a page to structured data fields and export as JSON, XML, or CSV.",
+  "version": "1.1.2",
+  "description": "Visually map elements on a page to structured data fields and export as JSON, YAML, TOON, XML, or CSV.",
   "permissions": ["storage", "scripting", "activeTab", "downloads"],
   "host_permissions": ["<all_urls>"],
   "background": {

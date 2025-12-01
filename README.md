@@ -8,7 +8,7 @@ You can:
 - 🏷️ Assign **field names** and choose **CSS** or **XPath** selectors
 - 📦 Save field mappings as **templates**
 - 📤 Extract structured data (supports **multiple matches** per selector → arrays)
-- 💾 Download results as **JSON, CSV, or XML**
+- 💾 Download results as **JSON, YAML, TOON, CSV, or XML**
 - 📁 Import/export templates as JSON (merge or replace)
 
 ---
@@ -73,6 +73,8 @@ You can:
 From the drawer you can download extraction results as:
 
 * **JSON**
+* **YAML**
+* **TOON**
 * **CSV**
 * **XML**
 
@@ -130,7 +132,7 @@ Located in `src/utils/`:
 
 * `highlight.js` – selection mode overlays and tooltip.
 * `xpath.js` – XPath generation from DOM elements.
-* `exporters.js` – JSON / CSV / XML export + filename helper.
+* `exporters.js` – JSON / YAML / TOON / CSV / XML export + filename helper.
 * `storage.js` – load/save/import/export templates.
 
 ---
@@ -244,7 +246,7 @@ You should now see **Teknuk DataMapper** in the toolbar.
 
    * See mapped fields with selector details.
    * Click **Extract** to collect data from the current page.
-7. Download results as **JSON**, **CSV**, or **XML**.
+7. Download results as **JSON**, **YAML**, **TOON**, **CSV**, or **XML**.
 
 ---
 

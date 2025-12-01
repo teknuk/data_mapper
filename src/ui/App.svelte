@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { loadTemplates, saveTemplate, importTemplates, exportTemplates } from '../utils/storage.js';
-  import { buildFilename, toJsonBlob, toCsvBlob, toXmlBlob } from '../utils/exporters.js';
+  import { buildFilename, toJsonBlob, toYamlBlob, toToonBlob, toCsvBlob, toXmlBlob } from '../utils/exporters.js';
 
   let templates = {};
   let currentTemplateName = 'default';
@@ -151,6 +151,12 @@
     if (type === 'json') {
       blob = toJsonBlob(templateName, url, data);
       ext = 'json';
+    } else if (type === 'yaml') {
+      blob = toYamlBlob(templateName, url, data);
+      ext = 'yml';
+    } else if (type === 'toon') {
+      blob = toToonBlob(data);
+      ext = 'toon';
     } else if (type === 'csv') {
       blob = toCsvBlob(data);
       ext = 'csv';
@@ -322,7 +328,7 @@
     </div>
 
     <!-- Right pane: fields & extraction -->
-    <div class="flex-1 flex flex-col text-xs">
+    <div class="flex-1 flex flex-col w-64 text-xs">
       <div class="p-3 border-b border-slate-800 items-center justify-between">
         <div>
           <div class="text-[10px] uppercase text-slate-500 tracking-wide mb-1">Mapped fields</div>
@@ -389,6 +395,20 @@
               on:click={() => download('json')}
             >
               JSON
+            </button>
+            <button
+              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
+              disabled={!extractionResult}
+              on:click={() => download('yaml')}
+            >
+              YAML
+            </button>
+            <button
+              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
+              disabled={!extractionResult}
+              on:click={() => download('toon')}
+            >
+              TOON
             </button>
             <button
               class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
