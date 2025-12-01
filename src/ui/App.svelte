@@ -13,6 +13,8 @@
   let extractionResult = null; // { templateName, data, url, timestamp }
   let toastMessage = '';
   let toastTimeout = null;
+  let featureTemplateIO = false;
+  let featureTemplateSync = false;
 
   onMount(async () => {
     templates = await loadTemplates();
@@ -212,13 +214,15 @@
         title="Move panel to right side"
       >➡</button>
     </div>
-    <button
-      class="text-xs px-2 py-1 rounded-full border border-slate-700 hover:bg-slate-800"
-      on:click={notifyContentTemplate}
-      title="Resend template to content script"
-    >
-      Sync
-    </button>
+    {#if featureTemplateSync }
+      <button
+        class="text-xs px-2 py-1 rounded-full border border-slate-700 hover:bg-slate-800"
+        on:click={notifyContentTemplate}
+        title="Resend template to content script"
+      >
+        Sync
+      </button>
+    {/if}
   </header>
 
   <div class="flex flex-1 overflow-hidden">
@@ -277,35 +281,37 @@
         </div>
       </div>
 
-      <div class="p-2 border-b border-slate-800 space-y-2">
-        <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Templates I/O</div>
-        <button
-          class="w-full mb-1 px-2 py-1 rounded-md text-[11px] border border-slate-700 hover:bg-slate-800"
-          on:click={handleExportTemplates}
-        >
-          Export templates
-        </button>
+      {#if featureTemplateIO }
+        <div class="p-2 border-b border-slate-800 space-y-2">
+          <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Templates I/O</div>
+          <button
+            class="w-full mb-1 px-2 py-1 rounded-md text-[11px] border border-slate-700 hover:bg-slate-800"
+            on:click={handleExportTemplates}
+          >
+            Export templates
+          </button>
 
-        <label class="block mb-1 text-[11px]">
-          <span class="block mb-0.5 text-slate-400">Import (merge)</span>
-          <input
-            type="file"
-            accept="application/json"
-            class="w-full text-[11px]"
-            on:change={(e) => handleImportTemplates(e, 'merge')}
-          />
-        </label>
+          <label class="block mb-1 text-[11px]">
+            <span class="block mb-0.5 text-slate-400">Import (merge)</span>
+            <input
+              type="file"
+              accept="application/json"
+              class="w-full text-[11px]"
+              on:change={(e) => handleImportTemplates(e, 'merge')}
+            />
+          </label>
 
-        <label class="block text-[11px]">
-          <span class="block mb-0.5 text-slate-400">Import (replace)</span>
-          <input
-            type="file"
-            accept="application/json"
-            class="w-full text-[11px]"
-            on:change={(e) => handleImportTemplates(e, 'replace')}
-          />
-        </label>
-      </div>
+          <label class="block text-[11px]">
+            <span class="block mb-0.5 text-slate-400">Import (replace)</span>
+            <input
+              type="file"
+              accept="application/json"
+              class="w-full text-[11px]"
+              on:change={(e) => handleImportTemplates(e, 'replace')}
+            />
+          </label>
+        </div>
+      {/if}
     </div>
 
     <!-- Right pane: fields & extraction -->
