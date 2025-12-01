@@ -28,6 +28,9 @@
     chrome.runtime.onMessage.addListener((message) => {
       if (message?.type === 'DATAMAPPER_EXTRACTION_RESULT') {
         extractionResult = message;
+        for (const key in currentFields) {
+          currentFields[key].value = extractionResult.data[key];
+        }
       }
       if (message?.type === 'DATAMAPPER_FIELD_ADDED') {
         const { templateName, fieldName, mapping } = message;
@@ -186,6 +189,10 @@
     templates = result;
     showToast(mode === 'replace' ? 'Templates replaced.' : 'Templates merged.');
     event.target.value = '';
+  }
+
+  function shortenSelector(sel, max = 60) {
+    return sel.length > max ? sel.slice(0, max) + "…" : sel;
   }
 </script>
 
@@ -348,9 +355,10 @@
                     {mapping.type}
                   </span>
                 </div>
-                <div class="text-[11px] text-slate-400 break-all">
-                  {mapping.selector}
+                <div class="text-[11px] text-slate-400 break-all" title={mapping.selector}>
+                  {shortenSelector(mapping.selector)}
                 </div>
+                <div>{mapping.value ?? "(empty)"}</div>
                 <button class="mt-1 text-[11px] text-red-400 hover:text-red-300 underline" on:click={() => removeField(name)}>
                   REMOVE
                 </button>

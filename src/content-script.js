@@ -66,11 +66,13 @@ async function handleElementChosen({ element, fieldName, selectorType }) {
     : generateXPath(element);
 
   const key = templateName;
+  const value = element.innerText || "";
 
   chrome.storage.local.get(key, (data) => {
     const templates = data[key] || {};
     templates[fieldName] = {
       type,
+      value,
       selector
     };
 
