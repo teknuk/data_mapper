@@ -192,7 +192,7 @@
   }
 
   function shortenSelector(sel, max = 60) {
-    return sel.length > max ? sel.slice(0, max) + "…" : sel;
+    return sel.length > max ? sel.slice(0, max) + `… [${sel.length}]`  : sel;
   }
 </script>
 
@@ -358,7 +358,7 @@
                 <div class="text-[11px] text-slate-400 break-all" title={mapping.selector}>
                   {shortenSelector(mapping.selector)}
                 </div>
-                <div>{mapping.value ?? "(empty)"}</div>
+                <div>{shortenSelector(mapping.value ?? "(empty)", 120)}</div>
                 <button class="mt-1 text-[11px] text-red-400 hover:text-red-300 underline" on:click={() => removeField(name)}>
                   REMOVE
                 </button>

@@ -34,6 +34,13 @@ function isValidSelectable(el, info) {
   return true;
 }
 
+function flashInvalid(el) {
+  el.style.transition = "outline 0.12s ease";
+  ["2px solid red", "", "2px solid red", ""].forEach((border, i)=>{
+    setTimeout(() => { el.style.outline = border }, 120 * i);
+  });
+}
+
 export function setupSelection({ onElementChosen }) {
   if (selectionActive) return;
   selectionActive = true;
@@ -62,11 +69,14 @@ export function setupSelection({ onElementChosen }) {
     const target = e.target;
     if (!target || !(target instanceof Element)) return;
     const info = extractElementInfo(target);
-    if (!isValidSelectable(target, info)) return;
+    if (!isValidSelectable(target, info)) {
+      flashInvalid(target);
+      return;
+    }
     currentElement = target;
     tooltipOpen = true;
     highlightElement(target, clickOverlay);
-    showTooltipForElement(target, onElementChosen);
+    showTooltipForElement(target, e, onElementChosen);
   };
 
   document.addEventListener('mouseover', mouseOver, true);
@@ -162,8 +172,8 @@ function createTooltip() {
 function highlightElement(el, overlay) {
   const rect = el.getBoundingClientRect();
   Object.assign(overlay.style, {
-    left: rect.left + 'px',
-    top: rect.top + 'px',
+    left: (rect.left + window.scrollX) + 'px',
+    top: (rect.top + window.scrollY) + 'px',
     width: rect.width + 'px',
     height: rect.height + 'px',
     display: 'block'
@@ -175,11 +185,14 @@ function clearOverlay(overlay) {
   overlay.style.display = 'none';
 }
 
-function showTooltipForElement(el, onElementChosen) {
+function showTooltipForElement(el, event, onElementChosen) {
   const rect = el.getBoundingClientRect();
   tooltip.style.display = 'block';
-  tooltip.style.left = rect.left + 'px';
-  tooltip.style.top = rect.bottom + 6 + 'px';
+  // tooltip.style.left = rect.left + 'px';
+  // tooltip.style.top = rect.bottom + 6 + 'px';
+  tooltip.style.position = "fixed";
+  tooltip.style.left = event.clientX + 10 + "px";
+  tooltip.style.top = event.clientY + 10 + "px";
 
   const nameInput = tooltip.querySelector('#dm-field-name');
   const typeSelect = tooltip.querySelector('#dm-selector-type');
