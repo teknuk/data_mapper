@@ -38,6 +38,7 @@
           }
         };
         // console.log(templates);
+        currentFields = templates[currentTemplateName];
         showToast(`Field "${fieldName}" added to template "${templateName}".`);
       }
     });
@@ -76,6 +77,14 @@
       target: 'content-script',
       type: 'DATAMAPPER_SET_TEMPLATE',
       templateName: currentTemplateName
+    });
+  }
+
+  function togglePanelSide(side) {
+    chrome.runtime.sendMessage({
+      target: 'content-script',
+      type: 'DATAMAPPER_SET_PANEL_SIDE',
+      side
     });
   }
 
@@ -187,6 +196,21 @@
         Template:
         <span class="text-emerald-400">{currentTemplateName}</span>
       </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- left arrow -->
+      <button
+        class="px-2 py-1 rounded-full border border-slate-700 hover:bg-slate-800"
+        on:click={() => togglePanelSide('left')}
+        title="Move panel to left side"
+      >⬅</button>
+
+      <!-- right arrow -->
+      <button
+        class="px-2 py-1 rounded-full border border-slate-700 hover:bg-slate-800"
+        on:click={() => togglePanelSide('right')}
+        title="Move panel to right side"
+      >➡</button>
     </div>
     <button
       class="text-xs px-2 py-1 rounded-full border border-slate-700 hover:bg-slate-800"

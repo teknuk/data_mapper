@@ -11,6 +11,7 @@ let currentSelectionType = 'css'; // default type for new mappings
 let panelVisible = false;
 let panelContainer = null;
 let panelIframe = null;
+let panelSide = "right";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return;
@@ -28,6 +29,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'DATAMAPPER_TOGGLE_PANEL':
       togglePanel();
+      break;
+
+    case 'DATAMAPPER_SET_PANEL_SIDE':
+      togglePanelSide(message);
       break;
 
     case 'DATAMAPPER_EXTRACT':
@@ -109,7 +114,11 @@ function handleExtraction(templateName, sendResponse) {
       } catch (e) {
         console.error('Extraction error for field', fieldName, e);
       }
-      result[fieldName] = values; // always array to support multi-match
+      if (values.length == 1) {
+        result[fieldName] = values.at(0);
+      } else {
+        result[fieldName] = values; // always array to support multi-match
+      }
     });
 
     const payload = {
@@ -124,6 +133,20 @@ function handleExtraction(templateName, sendResponse) {
     chrome.runtime.sendMessage(payload);
     if (sendResponse) sendResponse(payload);
   });
+}
+
+function togglePanelSide({ side }) {
+  if (!panelContainer) return;
+
+  if (side === "left") {
+    panelContainer.style.left = "0";
+    panelContainer.style.right = "auto";
+    panelSide = "left";
+  } else {
+    panelContainer.style.right = "0";
+    panelContainer.style.left = "auto";
+    panelSide = "right";
+  }
 }
 
 function togglePanel() {
@@ -141,7 +164,7 @@ function togglePanel() {
   Object.assign(panelContainer.style, {
     position: 'fixed',
     top: '0',
-    right: '0',
+    [panelSide]: '0',
     width: '420px',
     height: '100vh',
     zIndex: '2147483640',   // lower than your highlight tooltip z-index if needed
