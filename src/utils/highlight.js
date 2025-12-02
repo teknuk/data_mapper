@@ -230,3 +230,31 @@ function showTooltipForElement(el, event, onElementChosen) {
     saveBtn.removeEventListener('click', handleSave);
   };
 }
+
+export function createRevealOverlay(el, name) {
+  const rect = el.getBoundingClientRect();
+  const div = document.createElement("div");
+  div.classList.add("tn_overlay");
+  div.style.position = "absolute";
+  div.style.top = rect.top + window.scrollY + "px";
+  div.style.left = rect.left + window.scrollX + "px";
+  div.style.width = rect.width + "px";
+  div.style.height = rect.height + "px";
+  div.style.border = "2px solid #00aaff";
+  div.style.background = "rgba(0, 170, 255, 0.10)";
+  div.style.zIndex = 2147483647;  // max
+  div.style.pointerEvents = "none";
+  // label
+  const label = document.createElement("div");
+  label.textContent = name;
+  label.style.position = "absolute";
+  label.style.top = "-18px";
+  label.style.left = "0";
+  label.style.fontSize = "12px";
+  label.style.background = "#00aaff";
+  label.style.color = "white";
+  label.style.padding = "2px 4px";
+  label.style.pointerEvents = "none";
+  div.appendChild(label);
+  return div;
+}

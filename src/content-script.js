@@ -1,4 +1,4 @@
-import { setupSelection, teardownSelection, isSelectionActive } from './utils/highlight.js';
+import { setupSelection, teardownSelection, isSelectionActive, createRevealOverlay } from './utils/highlight.js';
 import { getCssSelector } from './utils/css_selector.js';
 import { generateXPath } from './utils/xpath.js';
 
@@ -7,6 +7,8 @@ import { generateXPath } from './utils/xpath.js';
 
 let currentTemplateName = 'default';
 let currentSelectionType = 'css'; // default type for new mappings
+
+let revealOverlays = [];
 
 let panelVisible = false;
 let panelContainer = null;
@@ -34,6 +36,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'TN_DATAMAPPER_SET_PANEL_SIDE':
       togglePanelSide(message);
       break;
+
+    case 'TN_DATAMAPPER_REVEAL':
+      currentTemplateName = message.templateName || currentTemplateName || 'default';
+      revealOverlays.length === 0 ? handleReveal(currentTemplateName) : clearRevealOverlays();
+      return true; // async
 
     case 'TN_DATAMAPPER_EXTRACT':
       currentTemplateName = message.templateName || currentTemplateName || 'default';
@@ -101,13 +108,7 @@ function handleExtraction(templateName, sendResponse) {
           const nodes = document.querySelectorAll(selector);
           values = Array.from(nodes).map((n) => n.textContent.trim());
         } else if (type === 'xpath') {
-          const xpathResult = document.evaluate(
-            selector,
-            document,
-            null,
-            XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-            null
-          );
+          const xpathResult = document.evaluate( selector, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null );
           for (let i = 0; i < xpathResult.snapshotLength; i++) {
             const node = xpathResult.snapshotItem(i);
             if (node) values.push(node.textContent.trim());
@@ -135,6 +136,64 @@ function handleExtraction(templateName, sendResponse) {
     chrome.runtime.sendMessage(payload);
     if (sendResponse) sendResponse(payload);
   });
+}
+
+function handleReveal(templateName) {
+  clearRevealOverlays();
+  chrome.storage.local.get(templateName, data => {
+    const template = data[templateName] || {};
+    const result = {};
+
+    Object.entries(template).forEach(([fieldName, { type, selector }]) => {
+      try {
+        let nodes = [];
+
+        if (type === "css") {
+          nodes = Array.from(document.querySelectorAll(selector));
+        } else if (type === "xpath") {
+          const r = document.evaluate( selector, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null );
+          for (let i = 0; i < r.snapshotLength; i++) {
+            nodes.push(r.snapshotItem(i));
+          }
+        }
+
+        let values = Array.from(nodes).map((n) => (n.textContent || "").trim());
+        if (values.length == 1) {
+          result[fieldName] = values.at(0);
+        } else {
+          result[fieldName] = values; // always array to support multi-match
+        }
+
+        // Create overlays
+        nodes.forEach(node => {
+          const overlay = createRevealOverlay(node, fieldName);
+          document.body.appendChild(overlay);
+          revealOverlays.push(overlay);
+        });
+
+      } catch (err) {
+        console.warn("Reveal failed:", fieldName, err);
+      }
+    });
+
+    // respond back to popup
+    chrome.runtime.sendMessage({
+      type: "TN_DATAMAPPER_REVEAL_RESULT",
+      templateName,
+      data: result,
+      revealedMessage: `🔍 Revealed ${revealOverlays.length} fields`
+    });
+  });
+}
+
+function clearRevealOverlays() {
+  revealOverlays.forEach(o => o.remove());
+  chrome.runtime.sendMessage({
+    type: "TN_DATAMAPPER_REVEAL_RESULT",
+    data: {},
+    revealedMessage: `🧹 Cleared ${revealOverlays.length} highlights`
+  });
+  revealOverlays = [];
 }
 
 function togglePanelSide({ side }) {

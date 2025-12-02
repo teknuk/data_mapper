@@ -15,6 +15,7 @@
   let toastTimeout = null;
   let featureTemplateIO = false;
   let featureTemplateSync = false;
+  let revealed = false;
 
   onMount(async () => {
     templates = await loadTemplates();
@@ -26,33 +27,44 @@
     selectTemplate(currentTemplateName);
     // Listen for content updates
     chrome.runtime.onMessage.addListener((message) => {
-      if (message?.type === 'TN_DATAMAPPER_EXTRACTION_RESULT') {
-        extractionResult = message;
-        for (const key in currentFields) {
-          currentFields[key].value = extractionResult.data[key];
-        }
-      }
-      if (message?.type === 'TN_DATAMAPPER_FIELD_ADDED') {
-        const { templateName, fieldName, mapping } = message;
-        if (!templates[templateName]) templates[templateName] = {};
-        templates = {
-          ...templates,
-          [templateName]: {
-            ...templates[templateName],
-            [fieldName]: mapping
-          }
-        };
-        // console.log(templates);
-        currentFields = templates[currentTemplateName];
-        showToast(`Field "${fieldName}" added to template "${templateName}".`);
+      if (!message || !message.type) return;
+
+      switch (message.type) {
+        case 'TN_DATAMAPPER_FIELD_ADDED':
+          handleFieldAdded(message);
+          break;
+
+        case 'TN_DATAMAPPER_EXTRACTION_RESULT':
+          handleExtractionResult(message);
+          break;
+
+        case 'TN_DATAMAPPER_REVEAL_RESULT':
+          handleRevealResult(message);
+          break;
+
+        default:
+          break;
       }
     });
   });
 
-  function showToast(msg) {
-    toastMessage = msg;
+  function showToast(toastMessage) {
     if (toastTimeout) clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => (toastMessage = ''), 2500);
+  }
+
+  async function handleFieldAdded({ templateName, fieldName, mapping }) {
+    if (!templates[templateName]) templates[templateName] = {};
+    templates = {
+      ...templates,
+      [templateName]: {
+        ...templates[templateName],
+        [fieldName]: mapping
+      }
+    };
+    // console.log(templates);
+    currentFields = templates[currentTemplateName];
+    showToast(`Field "${fieldName}" added to template "${templateName}".`);
   }
 
   async function removeField(fieldName) {
@@ -127,9 +139,38 @@
     });
   }
 
+  async function revealFields() {
+    chrome.runtime.sendMessage({
+      target: 'content-script',
+      type: 'TN_DATAMAPPER_REVEAL',
+      templateName: currentTemplateName
+    });
+  }
+
+  function handleRevealResult({data, revealedMessage}) {
+    if ( Object.keys(data).length === 0 ) {
+      revealed = false;
+      return;
+    }
+    revealed = true;
+    for (const key in currentFields) {
+      currentFields[key].value = data[key];
+    }
+    showToast(revealedMessage);
+  }
+
+  function handleExtractionResult(message) {
+    extractionResult = message;
+    // console.log('=== handleExtractionResult', extractionResult)
+    for (const key in currentFields) {
+      currentFields[key].value = extractionResult.data[key];
+    }
+    showToast(`Extracted ${Object.keys(extractionResult.data || {}).length} fields from ${extractionResult.url}`);
+  }
+
   async function extractData() {
     extractionResult = null;
-    console.log('=== extractData[currentTemplateName]', currentTemplateName)
+    // console.log('=== extractData[currentTemplateName]', currentTemplateName)
     chrome.runtime.sendMessage({
       target: 'content-script',
       type: 'TN_DATAMAPPER_EXTRACT',
@@ -329,19 +370,21 @@
 
     <!-- Right pane: fields & extraction -->
     <div class="flex-1 flex flex-col w-64 text-xs">
-      <div class="p-3 border-b border-slate-800 items-center justify-between">
+      <div class="flex flex-col p-3 border-b border-slate-800 items-center justify-between">
         <div>
           <div class="text-[10px] uppercase text-slate-500 tracking-wide mb-1">Mapped fields</div>
           <div class="text-[11px] text-slate-400">
             Click “Start selecting” then click elements on the page to map fields.
           </div>
         </div>
-        <button
-          class="ml-2 px-3 py-1 rounded-md bg-emerald-500 text-slate-900 text-[11px] font-semibold"
-          on:click={extractData}
-        >
-          Extract
-        </button>
+        <div class="flex gap-4">
+          <button class="px-3 py-1 rounded-md bg-emerald-500 text-slate-900 text-[11px] font-semibold" on:click={revealFields}>
+            { revealed ? "Hide" : "Reveal" }
+          </button>
+          <button class="px-3 py-1 rounded-md bg-emerald-500 text-slate-900 text-[11px] font-semibold" on:click={extractData}>
+            Extract
+          </button>
+        </div>
       </div>
 
       <div class="flex-1 overflow-auto p-3 space-y-2">
