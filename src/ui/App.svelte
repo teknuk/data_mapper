@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { loadTemplates, saveTemplate, importTemplates, exportTemplates } from '../utils/storage.js';
+  import { getTemplates, saveTemplate, loadPrefs, savePref, importTemplates, exportTemplates } from '../utils/storage.js';
   import { buildFilename, toJsonBlob, toYamlBlob, toToonBlob, toCsvBlob, toXmlBlob } from '../utils/exporters.js';
 
   let templates = {};
@@ -18,8 +18,12 @@
   let revealed = false;
 
   onMount(async () => {
-    templates = await loadTemplates();
-    console.log("=== onMount => loadTemplates()", templates)
+    templates = await getTemplates();
+    console.log("=== onMount => getTemplates()", templates)
+    const prefs = await loadPrefs();
+    currentTemplateName = prefs.TN_LAST_TEMPLATE ?? currentTemplateName;
+    selectorType = prefs.TN_LAST_SELECTOR_TYPE ?? selectorType;
+
     if (!templates[currentTemplateName]) {
       templates[currentTemplateName] = {};
       await saveTemplate(currentTemplateName, templates[currentTemplateName]);
@@ -111,6 +115,7 @@
   function selectTemplate(name) {
     currentTemplateName = name;
     currentFields = templates[currentTemplateName];
+    savePref("TN_LAST_TEMPLATE", name);
     notifyContentTemplate();
   }
 
@@ -143,14 +148,6 @@
     selectTemplate(name);
     // currentTemplateName = name;
     // notifyContentTemplate();
-  }
-
-  function selectionBackgroundClass() {
-    if (selectionActive) {
-      if (tooltipOpen) return 'bg-orange-500';
-      return 'bg-rose-500';
-    }
-    return 'bg-sky-500';
   }
 
   function reselectField(fieldName, selectorType) {
@@ -360,6 +357,7 @@
           <select
             class="w-full bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-[11px]"
             bind:value={selectorType}
+            on:change={() => savePref("TN_LAST_SELECTOR_TYPE", selectorType)}
           >
             <option value="css">CSS</option>
             <option value="xpath">XPath</option>
@@ -369,7 +367,7 @@
         <div>
           <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Selection</div>
           <button
-            class="w-full px-2 py-1 rounded-md text-[11px] font-semibold text-slate-900 {selectionBackgroundClass()}"
+            class="w-full px-2 py-1 rounded-md text-[11px] font-semibold text-slate-900 {selectionActive ? 'bg-rose-500' : 'bg-sky-500'}"
             on:click={toggleSelection}
           >
             {selectionActive ? 'Stop selecting' : 'Start selecting'}
