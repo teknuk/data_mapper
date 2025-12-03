@@ -26,7 +26,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'TN_DATAMAPPER_TOGGLE_SELECTION':
       currentTemplateName = message.templateName || currentTemplateName || 'default';
       currentSelectionType = message.selectorType || 'css';
-      toggleSelectionMode(message.active);
+      toggleSelectionMode(message);
       break;
 
     case 'TN_DATAMAPPER_TOGGLE_PANEL':
@@ -53,41 +53,46 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // Toggle selection
-function toggleSelectionMode(active) {
-  if (active && !isSelectionActive()) {
+function toggleSelectionMode({ mode, fieldName, selectorType, templateName }) {
+  // console.log("=== toggleSelectionMode", { mode, fieldName, selectorType, templateName })
+  if ((mode === 'ACTIVE') && !isSelectionActive()) {
     setupSelection({
+      reselectContext: {},
       onElementChosen: handleElementChosen
     });
-  } else if (!active && isSelectionActive()) {
+  } else if ((mode === 'INACTIVE') && isSelectionActive()) {
     teardownSelection();
+  } else if (mode === 'RESELECT') {
+    setupSelection({
+      reselectContext: { fieldName, selectorType, templateName },
+      onElementChosen: handleElementChosen
+    });
   }
 }
 
 // When user clicks an element and confirms a field name/type
-async function handleElementChosen({ element, fieldName, selectorType }) {
+async function handleElementChosen({ element, fieldName, selectorType, originalName }) {
   const templateName = currentTemplateName || 'default';
   const type = selectorType || currentSelectionType || 'css';
 
-  const selector = type === 'css'
-    ? getCssSelector(element)
-    : generateXPath(element);
-
-  const key = templateName;
+  const selector = type === 'css' ? getCssSelector(element) : generateXPath(element);
   const value = element.innerText || "";
 
-  chrome.storage.local.get(key, (data) => {
-    const templates = data[key] || {};
-    templates[fieldName] = {
-      type,
-      value,
-      selector
-    };
+  console.log("=== handleElementChosen ", {element, fieldName, selectorType, originalName});
 
-    chrome.storage.local.set({ [key]: templates }, () => {
+  chrome.storage.local.get(templateName, (data) => {
+    const templates = data[templateName] || {};
+    if (originalName && originalName !== fieldName) {
+      delete templates[originalName]; // if renamed: delete old key
+    }
+    templates[fieldName] = { type, value, selector };
+
+    chrome.storage.local.set({ [templateName]: templates }, () => {
       chrome.runtime.sendMessage({
-        type: 'TN_DATAMAPPER_FIELD_ADDED',
+        type: originalName ? 'TN_DATAMAPPER_FIELD_UPDATED' : 'TN_DATAMAPPER_FIELD_ADDED',
         templateName,
         fieldName,
+        originalName,
         mapping: templates[fieldName]
       });
     });

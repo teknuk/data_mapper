@@ -41,7 +41,7 @@ function flashInvalid(el) {
   });
 }
 
-export function setupSelection({ onElementChosen }) {
+export function setupSelection({ reselectContext, onElementChosen }) {
   if (selectionActive) return;
   selectionActive = true;
 
@@ -76,7 +76,7 @@ export function setupSelection({ onElementChosen }) {
     currentElement = target;
     tooltipOpen = true;
     highlightElement(target, clickOverlay);
-    showTooltipForElement(target, e, onElementChosen);
+    showTooltipForElement(target, e, reselectContext, onElementChosen);
   };
 
   document.addEventListener('mouseover', mouseOver, true);
@@ -89,6 +89,7 @@ export function setupSelection({ onElementChosen }) {
 }
 
 export function teardownSelection() {
+  // console.log("=== teardownSelection");
   selectionActive = false;
   cleanupFns.forEach((fn) => fn());
   cleanupFns = [];
@@ -185,7 +186,7 @@ function clearOverlay(overlay) {
   overlay.style.display = 'none';
 }
 
-function showTooltipForElement(el, event, onElementChosen) {
+function showTooltipForElement(el, event, reselectContext, onElementChosen) {
   const rect = el.getBoundingClientRect();
   tooltip.style.display = 'block';
   // tooltip.style.left = rect.left + 'px';
@@ -199,7 +200,12 @@ function showTooltipForElement(el, event, onElementChosen) {
   const cancelBtn = tooltip.querySelector('#dm-cancel');
   const saveBtn = tooltip.querySelector('#dm-save');
 
-  nameInput.value = '';
+  if (reselectContext && reselectContext?.fieldName) {
+    nameInput.value = reselectContext.fieldName;
+    typeSelect.value = reselectContext.selectorType;
+  } else {
+    nameInput.value = '';
+  }
   nameInput.focus();
 
   tooltip.addEventListener("keydown", (e) => {
@@ -219,7 +225,7 @@ function showTooltipForElement(el, event, onElementChosen) {
     tooltip.style.display = 'none';
     tooltipOpen = false;
     cleanup();
-    onElementChosen({ element: el, fieldName, selectorType });
+    onElementChosen({ element: el, fieldName, selectorType, originalName: reselectContext?.fieldName });
   };
 
   cancelBtn.addEventListener('click', handleCancel, { once: true });

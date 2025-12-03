@@ -34,6 +34,10 @@
           handleFieldAdded(message);
           break;
 
+        case 'TN_DATAMAPPER_FIELD_UPDATED':
+          handleFieldUpdated(message);
+          break;
+
         case 'TN_DATAMAPPER_EXTRACTION_RESULT':
           handleExtractionResult(message);
           break;
@@ -62,9 +66,30 @@
         [fieldName]: mapping
       }
     };
-    // console.log(templates);
     currentFields = templates[currentTemplateName];
     showToast(`Field "${fieldName}" added to template "${templateName}".`);
+  }
+
+  function handleFieldUpdated({ templateName, fieldName, originalName, mapping }) {
+    if (!templates[templateName]) templates[templateName] = {};
+    const updated = { ...templates[templateName] };
+    if (originalName && originalName !== fieldName) { // rename if needed
+      delete updated[originalName];
+    }
+    updated[fieldName] = mapping; // apply updated mapping
+    templates = { // update templates hash
+      ...templates,
+      [templateName]: updated
+    };
+    if (templateName === currentTemplateName) { // update current UI fields if this template is visible
+      currentFields = updated;
+    }
+    chrome.runtime.sendMessage({ target: 'content-script', type: 'TN_DATAMAPPER_TOGGLE_SELECTION', mode: 'INACTIVE' });
+    if (originalName && originalName !== fieldName) {
+      showToast(`Field "${originalName}" renamed to "${fieldName}".`);
+    } else {
+      showToast(`Field "${fieldName}" updated.`);
+    }
   }
 
   async function removeField(fieldName) {
@@ -128,12 +153,29 @@
     return 'bg-sky-500';
   }
 
+  function reselectField(fieldName, selectorType) {
+    if (selectionActive) {
+      selectionActive = false;
+      chrome.runtime.sendMessage({ target: 'content-script', type: 'TN_DATAMAPPER_TOGGLE_SELECTION', mode: 'INACTIVE' });
+    }
+    setTimeout(() => {
+      chrome.runtime.sendMessage({
+        target: 'content-script',
+        type: 'TN_DATAMAPPER_TOGGLE_SELECTION',
+        mode: 'RESELECT',
+        templateName: currentTemplateName,
+        fieldName,
+        selectorType
+      });
+    }, 200);
+  }
+
   async function toggleSelection() {
     selectionActive = !selectionActive;
     chrome.runtime.sendMessage({
       target: 'content-script',
       type: 'TN_DATAMAPPER_TOGGLE_SELECTION',
-      active: selectionActive,
+      mode: selectionActive ? 'ACTIVE' : 'INACTIVE',
       templateName: currentTemplateName,
       selectorType
     });
@@ -408,9 +450,16 @@
                   {shortenSelector(mapping.selector)}
                 </div>
                 <div>{shortenSelector(mapping.value ?? "(empty)", 120)}</div>
-                <button class="mt-1 text-[11px] text-red-400 hover:text-red-300 underline" on:click={() => removeField(name)}>
-                  REMOVE
-                </button>
+                <div class="flex gap-3 mt-1">
+                  <button class="px-1.5 py-0.5 rounded text-[10px] text-orange-400 hover:text-orange-300 border border-slate-500"
+                    on:click={() => reselectField(name, mapping.type)}
+                    >
+                    RESELECT
+                  </button>
+                  <button class="px-1.5 py-0.5 rounded text-[10px] text-red-400 hover:text-red-300 border border-slate-500" on:click={() => removeField(name)}>
+                    REMOVE
+                  </button>
+                </div>
               </div>
             {/each}
           </div>
