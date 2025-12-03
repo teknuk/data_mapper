@@ -1,6 +1,7 @@
 import { setupSelection, teardownSelection, isSelectionActive, createRevealOverlay } from './utils/highlight.js';
 import { getCssSelector } from './utils/css_selector.js';
 import { generateXPath } from './utils/xpath.js';
+import { getTemplate, saveTemplate } from './utils/storage.js';
 
 // This file will be bundled in practice; for raw use, you can inline utils here
 // or adjust build paths. For simplicity, we assume a bundler copies utils.
@@ -77,117 +78,78 @@ async function handleElementChosen({ element, fieldName, selectorType, originalN
 
   const selector = type === 'css' ? getCssSelector(element) : generateXPath(element);
   const value = element.innerText || "";
-
   console.log("=== handleElementChosen ", {element, fieldName, selectorType, originalName});
 
-  chrome.storage.local.get(templateName, (data) => {
-    const templates = data[templateName] || {};
-    if (originalName && originalName !== fieldName) {
-      delete templates[originalName]; // if renamed: delete old key
-    }
-    templates[fieldName] = { type, value, selector };
+  const template = await getTemplate(templateName); // --- storage via helper ---
+  if (originalName && originalName !== fieldName) {
+    delete template[originalName]; // if renamed: delete old key
+  }
+  template[fieldName] = { type, value, selector };
+  await saveTemplate(templateName, template);
 
-    chrome.storage.local.set({ [templateName]: templates }, () => {
-      chrome.runtime.sendMessage({
-        type: originalName ? 'TN_DATAMAPPER_FIELD_UPDATED' : 'TN_DATAMAPPER_FIELD_ADDED',
-        templateName,
-        fieldName,
-        originalName,
-        mapping: templates[fieldName]
-      });
-    });
+  chrome.runtime.sendMessage({
+    type: originalName ? "TN_DATAMAPPER_FIELD_UPDATED" : "TN_DATAMAPPER_FIELD_ADDED",
+    templateName,
+    fieldName,
+    originalName,
+    mapping: template[fieldName]
   });
 }
 
 // Extraction logic
-function handleExtraction(templateName, sendResponse) {
-  const key = templateName;
-  chrome.storage.local.get(key, (data) => {
-    const template = data[key] || {};
-    const result = {};
-
-    Object.entries(template).forEach(([fieldName, { type, selector }]) => {
-      let values = [];
-      try {
-        if (type === 'css') {
-          const nodes = document.querySelectorAll(selector);
-          values = Array.from(nodes).map((n) => n.textContent.trim());
-        } else if (type === 'xpath') {
-          const xpathResult = document.evaluate( selector, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null );
-          for (let i = 0; i < xpathResult.snapshotLength; i++) {
-            const node = xpathResult.snapshotItem(i);
-            if (node) values.push(node.textContent.trim());
-          }
-        }
-      } catch (e) {
-        console.error('Extraction error for field', fieldName, e);
-      }
-      if (values.length == 1) {
-        result[fieldName] = values.at(0);
-      } else {
-        result[fieldName] = values; // always array to support multi-match
-      }
-    });
-
-    const payload = {
-      type: 'TN_DATAMAPPER_EXTRACTION_RESULT',
-      templateName,
-      data: result,
-      url: window.location.href,
-      timestamp: Date.now()
-    };
-
-    // respond to popup via background
-    chrome.runtime.sendMessage(payload);
-    if (sendResponse) sendResponse(payload);
-  });
+async function handleExtraction(templateName) {
+  const { result } = await extractTemplateMatches(templateName);
+  const payload = {
+    type: "TN_DATAMAPPER_EXTRACTION_RESULT",
+    templateName,
+    data: result,
+    url: window.location.href,
+    timestamp: Date.now()
+  };
+  chrome.runtime.sendMessage(payload);
 }
 
-function handleReveal(templateName) {
-  clearRevealOverlays();
-  chrome.storage.local.get(templateName, data => {
-    const template = data[templateName] || {};
-    const result = {};
+async function extractTemplateMatches(templateName, { includeNodes = false } = {}) {
+  const template = await getTemplate(templateName);   // ← uses your storage API
+  const result = {};
+  const nodeMap = {};
 
-    Object.entries(template).forEach(([fieldName, { type, selector }]) => {
-      try {
-        let nodes = [];
-
-        if (type === "css") {
-          nodes = Array.from(document.querySelectorAll(selector));
-        } else if (type === "xpath") {
-          const r = document.evaluate( selector, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null );
-          for (let i = 0; i < r.snapshotLength; i++) {
-            nodes.push(r.snapshotItem(i));
-          }
-        }
-
-        let values = Array.from(nodes).map((n) => (n.textContent || "").trim());
-        if (values.length == 1) {
-          result[fieldName] = values.at(0);
-        } else {
-          result[fieldName] = values; // always array to support multi-match
-        }
-
-        // Create overlays
-        nodes.forEach(node => {
-          const overlay = createRevealOverlay(node, fieldName);
-          document.body.appendChild(overlay);
-          revealOverlays.push(overlay);
-        });
-
-      } catch (err) {
-        console.warn("Reveal failed:", fieldName, err);
+  for (const [fieldName, { type, selector }] of Object.entries(template)) {
+    let nodes = [];
+    try {
+      if (type === "css") {
+        nodes = Array.from(document.querySelectorAll(selector));
+      } else if (type === "xpath") {
+        const xpathResult = document.evaluate( selector, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null );
+        nodes = Array.from({ length: xpathResult.snapshotLength }, (_, i) => xpathResult.snapshotItem(i));
       }
-    });
+      const values = nodes.map(n => (n?.textContent || "").trim());
+      result[fieldName] = values.length === 1 ? values[0] : values;
+      if (includeNodes) nodeMap[fieldName] = nodes;
+    } catch (err) {
+      console.warn("Extraction failed:", fieldName, err);
+      result[fieldName] = null;
+      if (includeNodes) nodeMap[fieldName] = [];
+    }
+  }
+  return { result, nodeMap };
+}
 
-    // respond back to popup
-    chrome.runtime.sendMessage({
-      type: "TN_DATAMAPPER_REVEAL_RESULT",
-      templateName,
-      data: result,
-      revealedMessage: `🔍 Revealed ${revealOverlays.length} fields`
-    });
+async function handleReveal(templateName) {
+  clearRevealOverlays();
+  const { result, nodeMap } = await extractTemplateMatches(templateName, { includeNodes: true });
+  for (const [fieldName, nodes] of Object.entries(nodeMap)) {
+    for (const node of nodes) {
+      const overlay = createRevealOverlay(node, fieldName);
+      document.body.appendChild(overlay);
+      revealOverlays.push(overlay);
+    }
+  }
+  chrome.runtime.sendMessage({
+    type: "TN_DATAMAPPER_REVEAL_RESULT",
+    templateName,
+    data: result,
+    revealedMessage: `🔍 Revealed ${revealOverlays.length} fields`
   });
 }
 
