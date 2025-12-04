@@ -282,7 +282,7 @@
   }
 </script>
 
-<div class="w-[420px] h-[800px] bg-slate-900 text-slate-100 flex flex-col">
+<div class="w-[420px] h-[100vh] bg-slate-900 text-slate-100 flex flex-col">
   <!-- Header -->
   <header class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
     <div>
@@ -406,19 +406,17 @@
           </label>
         </div>
       {/if}
-    </div>
 
-    <!-- Right pane: fields & extraction -->
-    <div class="flex-1 flex flex-col w-64 text-xs">
       <div class="flex flex-col p-3 border-b border-slate-800 items-center justify-between">
         <div>
-          <div class="text-[10px] uppercase text-slate-500 tracking-wide mb-1">Mapped fields</div>
-          <div class="text-[11px] text-slate-400">
+          <div class="text-[10px] uppercase text-slate-500 tracking-wide">Mapped fields</div>
+          <div class="text-[11px] text-slate-400 my-1">
             Click “Start selecting” then click elements on the page to map fields.
           </div>
         </div>
         <div class="flex gap-4">
-          <button class="px-3 py-1 rounded-md bg-emerald-500 text-slate-900 text-[11px] font-semibold" on:click={revealFields}>
+          <button class="px-3 py-1 rounded-md {revealed ? "bg-rose-500" : "bg-emerald-500"} text-slate-900 text-[11px] font-semibold"
+            on:click={revealFields}>
             { revealed ? "Hide" : "Reveal" }
           </button>
           <button class="px-3 py-1 rounded-md bg-emerald-500 text-slate-900 text-[11px] font-semibold" on:click={extractData}>
@@ -427,6 +425,66 @@
         </div>
       </div>
 
+      <!-- Extraction result -->
+      <div class="border-t border-slate-800 p-3 space-y-2">
+        <div>
+          <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Extraction</div>
+          {#if extractionResult}
+            <div class="text-[11px] text-slate-400 whitespace-normal break-all mb-1">
+              {Object.keys(extractionResult.data || {}).length} fields from
+              <span class="text-sky-400 ml-1"> {extractionResult.url} </span>
+            </div>
+          {:else}
+            <div class="text-[11px] text-slate-500">No extraction yet. Click “Extract”.</div>
+          {/if}
+        </div>
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-center gap-1">
+            <button
+              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
+              disabled={!extractionResult}
+              on:click={() => download('json')}
+            >
+              JSON
+            </button>
+            <button
+              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
+              disabled={!extractionResult}
+              on:click={() => download('csv')}
+            >
+              CSV
+            </button>
+            <button
+              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
+              disabled={!extractionResult}
+              on:click={() => download('xml')}
+            >
+              XML
+            </button>
+          </div>
+          <div class="flex justify-center gap-1">
+            <button
+              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
+              disabled={!extractionResult}
+              on:click={() => download('yaml')}
+            >
+              YAML
+            </button>
+            <button
+              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
+              disabled={!extractionResult}
+              on:click={() => download('toon')}
+            >
+              TOON
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right pane: fields & extraction -->
+    <div class="flex-1 flex flex-col w-64 text-xs">
       <div class="flex-1 overflow-auto p-3 space-y-2">
         {#if Object.keys(currentFields).length === 0}
           <div class="text-[11px] text-slate-500 italic">
@@ -462,60 +520,6 @@
             {/each}
           </div>
         {/if}
-      </div>
-
-      <!-- Extraction result -->
-      <div class="border-t border-slate-800 p-3 space-y-2">
-        <div class="flex flex-col items-center justify-between">
-          <div>
-            <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">Extraction</div>
-            {#if extractionResult}
-              <div class="text-[11px] text-slate-400">
-                {Object.keys(extractionResult.data || {}).length} fields from
-                <span class="text-sky-400 ml-1"> {extractionResult.url} </span>
-              </div>
-            {:else}
-              <div class="text-[11px] text-slate-500">No extraction yet. Click “Extract”.</div>
-            {/if}
-          </div>
-          <div class="flex gap-1">
-            <button
-              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
-              disabled={!extractionResult}
-              on:click={() => download('json')}
-            >
-              JSON
-            </button>
-            <button
-              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
-              disabled={!extractionResult}
-              on:click={() => download('yaml')}
-            >
-              YAML
-            </button>
-            <button
-              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
-              disabled={!extractionResult}
-              on:click={() => download('toon')}
-            >
-              TOON
-            </button>
-            <button
-              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
-              disabled={!extractionResult}
-              on:click={() => download('csv')}
-            >
-              CSV
-            </button>
-            <button
-              class="px-2 py-1 text-[11px] rounded-md border border-slate-700 hover:bg-slate-800"
-              disabled={!extractionResult}
-              on:click={() => download('xml')}
-            >
-              XML
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
