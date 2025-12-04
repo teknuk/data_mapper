@@ -1,23 +1,37 @@
-// vite.background.config.js
 import { defineConfig } from 'vite';
 import path from 'path';
 
-export default defineConfig({
-  build: {
-    outDir: 'dist',
-    emptyOutDir: false,
-    sourcemap: true,
-    minify: false,
+export default defineConfig(({ mode }) => {
+  const isProd = mode === 'production';
+  const terserProdOptions = {
+          compress: {
+            drop_console: true,
+            drop_debugger: true,
+          },
+          format: {
+            comments: false,
+          },
+          mangle: true,
+        };
 
-    rollupOptions: {
-      input: {
-        background: path.resolve(__dirname, 'src/service-worker.js')
+  return {
+    publicDir: false,
+    build: {
+      outDir: 'dist/service-worker',
+      emptyOutDir: false,
+      sourcemap: !isProd,
+      minify: isProd ? 'terser' : false,
+      terserOptions: isProd ?  terserProdOptions : {},
+      rollupOptions: {
+        input: {
+          background: path.resolve(__dirname, 'src/service-worker.js'),
+        },
+        output: {
+          entryFileNames: () => 'service-worker.js',
+          chunkFileNames: 'service-worker.js',
+          format: 'es',
+        },
       },
-      output: {
-        entryFileNames: () => 'service-worker.js',
-        chunkFileNames: 'service-worker.js',
-        format: 'iife'
-      }
-    }
+    },
   }
 });

@@ -200,7 +200,7 @@ function togglePanel() {
   });
 
   panelIframe = document.createElement('iframe');
-  panelIframe.src = chrome.runtime.getURL('index.html'); // we’ll create this
+  panelIframe.src = chrome.runtime.getURL('panel/index.html'); // we’ll create this
   panelIframe.sandbox = "allow-scripts allow-same-origin";
   Object.assign(panelIframe.style, {
     width: '100%',

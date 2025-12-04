@@ -4,17 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npm run build:clean && npm run build:panel && npm run build:scripts",
-    "build:clean": "rimraf dist",
-    "build:panel": "vite build --config vite.panel.config.js",
-    "build:scripts": "vite build --config vite.content.config.js && vite build --config vite.background.config.js",
-    "dev": "npm-run-all --parallel dev:panel dev:scripts",
-    "dev:panel": "vite build --watch --config vite.panel.config.js",
-    "dev:scripts": "npm-run-all --parallel dev:content dev:background",
-    "dev:content": "vite build --watch --config vite.content.config.js",
-    "dev:background": "vite build --watch --config vite.background.config.js",
+    "build:panel": "vite build --config vite.panel.config.js --mode production",
+    "build:content": "vite build --config vite.content.config.js --mode production",
+    "build:background": "vite build --config vite.background.config.js --mode production",
+    "build": "rimraf dist && npm-run-all --parallel build:panel build:content build:background && cp -r public/* dist/",
+    "dev:background": "vite build --config vite.background.config.js --watch --mode development",
+    "dev:content": "vite build --config vite.content.config.js --watch --mode development",
+    "dev:panel": "vite build --config vite.panel.config.js --watch --mode development",
+    "dev": "rimraf dist && mkdir dist && cp -r public/* dist/ && npm-run-all --parallel dev:panel dev:content dev:background",
     "test": "vitest",
-    "test:e2e": "node tests/e2e/datamapper.e2e.js"
+    "test:e2e": "node tests/e2e/datamapper.e2e.js",
+    "zip": "cd dist && zip -r tn_datamapper_1_1_.zip ."
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
@@ -25,6 +25,7 @@
     "rimraf": "^6.1.2",
     "svelte": "^4.0.0",
     "tailwindcss": "^3.4.0",
+    "terser": "^5.44.1",
     "vite": "^5.0.0",
     "vitest": "^1.0.0"
   }
